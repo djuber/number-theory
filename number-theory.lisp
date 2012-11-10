@@ -3,7 +3,7 @@
 
 (defparameter *number-theory-catalogue*
   '(((sieve5 n) "Returns a list of all primes from 2 to n")
-    (*small-primes* "a list of primes less than 10M")
+    (*small-primes* "a list of primes less than 100M")
     (*size-of-small-primes* "length of *small-primes*, for bounds checking")
     ((primep n) "true if n is prime, calls factor")
     ((prime-at n) "the nth prime")
@@ -60,7 +60,7 @@
 		     (declare (fixnum j inc))
 		     (setf (sbit a j) 1))))))))
 
-;; let's save the easy ones, less than 10M
+;; let's save the easy ones, less than 100M
 ;; since sieve5 tries to allocate a bit-array, if you have less memory, you should make the exponent 
 ;; below smaller
 (defparameter *small-primes* (sieve5 (expt 10 8)))
