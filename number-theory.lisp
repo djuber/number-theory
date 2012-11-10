@@ -1,3 +1,6 @@
+;; catalogue should be a quick summary of all functions in the file.
+;; I think defpackage is probably a better long term solution
+
 (defparameter *number-theory-catalogue*
   '(((sieve5 n) "Returns a list of all primes from 2 to n")
     (*small-primes* "a list of primes less than 10M")
@@ -58,6 +61,8 @@
 		     (setf (sbit a j) 1))))))))
 
 ;; let's save the easy ones, less than 10M
+;; since sieve5 tries to allocate a bit-array, if you have less memory, you should make the exponent 
+;; below smaller
 (defparameter *small-primes* (sieve5 (expt 10 8)))
 ;; and let's not count these over and over again
 (defparameter *size-of-small-primes* (length *small-primes*))
@@ -105,6 +110,8 @@
     (when idx
       (- p (previous-prime p)))))
 
+
+;; goldbach conjecture : every even number at least 4 is the sum of two primes
 (defun goldbach (n)
   "find prime combinations yielding n"
   (check-type n integer)
@@ -115,11 +122,14 @@
 		   (<= i (/ n 2))) 
 	   collect (list i '+ (- n i))))))
 
+;; bertrand's conjecture has been proven several times
 (defun bertrand (n)
   "find the smallest p between n and 2n"
   (let ((primes (remove-if-not (lambda (x) (> x n)) (sieve5 (* 2 n)))))
     (first primes)))
 
+
+;; find prime triplets of a given form
 (defun triplets (n &key (offset1 2) (offset2 6) (upper-bound 1000))
   "find the first n prime triplets p, p+offset1, p+offset2"
   (let ((primes (sieve5 upper-bound)))
@@ -132,10 +142,14 @@
 	collect (list p (+ p offset1) (+ p offset2)))
      0 n)))
 
+;; could have used random-elt from academy?
+;; in any case, select some prime
 (defun random-prime ()
+  "select a prime from our *small-primes* list at random"
   (elt *small-primes* (random *size-of-small-primes*)))
 
 (defun random-composite (&optional (factors 2))
+  "produce a composite number with factors prime factors"
   (apply #'* (loop for i from 1 to factors collecting (random-prime))))
 
 (defun factor (n)
@@ -152,15 +166,19 @@ Returns small divisors and unfactored remainder."
   (let (result (n n))
     (loop for s in *small-primes* do (do () ((not (zerop (mod n s)))) (push s result) (setf n (/ n s))) when (> s n) return nil)
     (values result n)))
-   
+
+
+;; right now factor% has an identity crisis, whether it is a general purpose trial division,
+;; or only a fall-back from factor. I should stream-line this for the latter
 (defun factor% (n)
   "return a list of factors of n"
-  (let ((count 1)
+  (let ((count (if (= 1 (mod (last1 *small-primes*) 6)) 1 0))
+	(factors nil)
 	(limit (+ 1 (isqrt n))))
     (cond
       ((= n 1) nil)
-      ((evenp n) (cons 2 (factor (/ n 2))))
-      ((zerop (mod n 3)) (cons 3 (factor (/ n 3))))
+      ((evenp n) (cons 2 (factor% (/ n 2))))
+      ((zerop (mod n 3)) (cons 3 (factor% (/ n 3))))
       (t 
        (labels ((inc (test) 
 		  (incf count) 
@@ -169,10 +187,8 @@ Returns small divisors and unfactored remainder."
 		      (+ test 2))))
 	 (do
 	  ((test (last1 *small-primes*) (inc test)))
-	  ((or (zerop (mod n test)) (> test limit))
-	   (if (> test limit)
-	       (list n)
-	       (cons test (factor (/ n test)))))))))))
+	  ((> test limit)(append (list n) factors))
+	   (while (zerop (mod n test)) (push test factors) (setf n (/ n test)))))))))
 
 
 (defun is-square (n)
@@ -744,6 +760,13 @@ to congruence mod p^expt"
       T))
 
 ;;;; Encryption/Decryption methods follow
+
+;; Rosen uses a case insensitive letters only base 26 encoding for these 
+;; for exponentiation ciphers, he chunks the letters into groups of digits, in
+;; a mixed base 26*100, so ZZ encodes to 2525 (+ (* 100 25) 25)
+;; rather than (+ (* 25 26) 25)
+;; this is mainly to ease manual encoding and is a rather poor choice in general
+
 
 (defun to-numbers (plaintext)
   "map a string to a list of numbers mod 26"
