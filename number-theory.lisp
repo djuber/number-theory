@@ -868,12 +868,6 @@ to congruence mod p^expt"
 	 ciphertext)))
       (format t "exponent and phi(mod) not relatively prime. Not invertible!~%")))
 
-(defun reverse-phi (phi n)
-  "given phi(n), provide two factors of n"
-  (values 
-   (/ (+ n 1 (- phi) (sqrt (- (square (+ n 1 (- phi))) (* 4 n)))) 2)
-   (/ (+ n 1 (- phi) (- (sqrt (- (square (+ n 1 (- phi))) (* 4 n)))) 2))))
-
 
 (defun pollard-rho-full-factorization (n)
     (if (evenp n)
@@ -905,3 +899,40 @@ to congruence mod p^expt"
 	(when debug (format t "~a ~a ~a ~a ~a ~a~%"
 		i k x y d n)))))
 
+
+;; if n is prime, and phi(n) is n-1, this is imaginary and a problem, but
+;; (multiple-value-bind (p q) (reverse-phi phi n) (* p q)) gives n (+ roundoff)
+(defun reverse-phi (phi n)
+  "given phi(n), provide two factors of n"
+  (values 
+   (/ (+ n 1 (- phi) (sqrt (- (square (+ n 1 (- phi))) (* 4 n)))) 2)
+   (/ (+ n 1 (- phi) (- (sqrt (- (square (+ n 1 (- phi))) (* 4 n))))) 2)))
+
+(defun factors-given-phi (n phi)
+  "same thing as reverse-phi above, clearer"
+  (let* ((p+q (+ 1 n (- phi)))
+	 (p-q (round (sqrt (+ (square p+q) (* -4 n))))))
+    (values (/ (+ p+q p-q) 2))
+	    (/ (- p+q p-q) 2)))
+#+nil
+(defun order (n modulus)
+  "least positive exponent a such that n^a = 1 mod modulus"
+  (loop for i from 1 to (1- modulus)
+       when (= 1 (modpow n i modulus))
+       return i))
+
+
+(defun order (n modulus)
+  "least positive exponenet of n such that n^a = 1 mod modulus"
+  ;; if (gcd n mod) != 1, this is nil
+  (loop for i in (sort (all-divisors (phi modulus)) #'<)
+     when (= 1 (modpow n i modulus))
+     return i))
+
+;; this is innefficient, should factor n and use the fact that p^t, 2p^t, 2,4 have prim-roots.
+
+(defun primitive-roots (n)
+  "collect primitive roots of n"
+  (let ((phi (phi n)))
+    (loop for r in (reduced-residue-system n)
+       when (= phi (order r n)) collect r)))
