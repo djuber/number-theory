@@ -110,6 +110,10 @@
     (when idx
       (- p (previous-prime p)))))
 
+(defun primes-upto (n)
+  "primes up to (and including) n"
+  (remove-if (lambda (p) (> p n)) *small-primes*))
+
 
 ;; goldbach conjecture : every even number at least 4 is the sum of two primes
 (defun goldbach (n)
@@ -199,7 +203,7 @@ Returns small divisors and unfactored remainder."
   "multiply n by itself"
   (* n n))
 
-(defun fermat-factor (n)
+(defun fermat-factor (n )
   "yield a fermat factorization of n, printing results"
   ;; find an s,t pair such that n = s^2 - t^2, or s^2 - n = t^2 
   ;; then n = (+ s t) * (- s t)
@@ -208,10 +212,10 @@ Returns small divisors and unfactored remainder."
        when (is-square (-   (square i) n))
        do (let ((s i)
 		(r (isqrt (- (square i) n))))
-	    (format t "~a = ~a - ~a~%" n (square s) (square r))
-	    (format t "~a = ~a * ~a~%" n (- s r) (+ s r))
-	    (fermat-factor (- s r))
-	    (fermat-factor (+ s r)))))
+	      (format t "~a = ~a - ~a~%" n (square s) (square r))
+	      (format t "~a = ~a * ~a~%" n (- s r) (+ s r))
+	      (fermat-factor (- s r))
+	      (fermat-factor (+ s r)))))
 
 (defun linear-diophantine-equation (a b c)
   "find a general solution for ax + by = c, where a,b,c,x, and y are integers"
@@ -355,6 +359,7 @@ produce the solution to the simultaneous one variable congruence system and its 
 (defun pairs (list1 list2)
   "zip list into dotted pairs.
 example: (pairs '(1 2 3 4) '(a b c d)) => ((1 . a) (2 . b) (3 . c) (4 . d))"
+Tested-by: Daniel Uber <djuber@gmail.com>
   (loop for i in list1 
        for j in list2 
        collect (cons i j)))
@@ -911,9 +916,9 @@ to congruence mod p^expt"
 (defun factors-given-phi (n phi)
   "same thing as reverse-phi above, clearer"
   (let* ((p+q (+ 1 n (- phi)))
-	 (p-q (round (sqrt (+ (square p+q) (* -4 n))))))
-    (values (/ (+ p+q p-q) 2))
-	    (/ (- p+q p-q) 2)))
+	 (p-q  (isqrt (+ (square p+q) (* -4 n)))))
+    (values (/ (+ p+q p-q) 2)
+	    (/ (- p+q p-q) 2))))
 #+nil
 (defun order (n modulus)
   "least positive exponent a such that n^a = 1 mod modulus"
@@ -936,3 +941,38 @@ to congruence mod p^expt"
   (let ((phi (phi n)))
     (loop for r in (reduced-residue-system n)
        when (= phi (order r n)) collect r)))
+
+
+;; algorithms according to Connelly Barnes 'Integer Factorization Algorithms' paper
+;; pollard-rho above was following Cormen 'Algorithms' 
+(defun pollard-rho-barnes (n)
+  "find a non-trivial divisor of n"
+  (let ((x1 2) ; initial x1 - tortoise value
+	(x2 2) ; initial x2 - hare value
+	(c 1))  ; initial shift 
+    (flet ((fun (x) (+ (square x) c)))
+      (do ((x1 x1 (mod (fun x1) n))
+	   (x2 x2 (mod (fun (fun x2)) n))
+	   (s n (gcd (- x2 x1) n)))
+	  ((< 1 s n) (values s (/ n s)))))))
+
+(defun power-of-two-p (n)
+  (zerop (logand n (1- n))))
+
+(defun brent-factor (n)
+  (flet ((fun (x) (mod (+ (square x) 1) n)))
+    (let ((i 1))
+      (do* ((x1 (random n) (fun x1))
+	   (x2 x1 (if (power-of-two-p i) x1 x2))
+	   (s n (gcd (- x2 x1) n)))
+	  ((< 1 s n) (values s (/ n s)))
+	(incf i)))))
+
+(defun pollard-p-1-factor (n)
+  (let ((two-k-factorial 2)) ;barnes has a typo in the pseudocode, using 1 here.
+    (do* ((k 1 (1+ k))
+	  (two-k-factorial (modpow two-k-factorial k n)
+			   (modpow two-k-factorial k n))
+	  (rk (gcd (1- two-k-factorial) n)
+	      (gcd (1- two-k-factorial) n)))
+	 ((< 1 rk n) (values rk (/ n rk))))))
