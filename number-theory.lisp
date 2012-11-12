@@ -675,7 +675,7 @@ to congruence mod p^expt"
   (labels ((expt-minus (base expt)
 	     (if (or (null base) (null expt)) 
 		 1
-		 (- (expt base expt) (expt base (1- expt))))))
+		 (* (1- base) (expt base (1- expt))))))
     (do* ((factors (prime-powers n) (cddr factors))
 	  (prime (first factors) (first factors))
 	  (expt (second factors) (second factors)))
@@ -884,7 +884,7 @@ to congruence mod p^expt"
 	      (list r)))))
     
 
-;; non-cycle-detecting version
+;; Cormen Algorithms p 976, using Brent's cycle 
 (defun pollard-rho (n &key (debug nil))
   "mote-carlo method for finding non-trivial divisors"
   (if (< 1 n) ; are there going to be non-trivial divisors?
@@ -945,8 +945,9 @@ to congruence mod p^expt"
 
 ;; algorithms according to Connelly Barnes 'Integer Factorization Algorithms' paper
 ;; pollard-rho above was following Cormen 'Algorithms' 
+;; an improvement would be to change c if too many iterations occur
 (defun pollard-rho-barnes (n)
-  "find a non-trivial divisor of n"
+  "find a non-trivial divisor of n, from Connelly Barnes paper"
   (let ((x1 2) ; initial x1 - tortoise value
 	(x2 2) ; initial x2 - hare value
 	(c 1))  ; initial shift 
@@ -960,6 +961,7 @@ to congruence mod p^expt"
   (zerop (logand n (1- n))))
 
 (defun brent-factor (n)
+  "Brent's modification to the Pollard-Rho method"
   (flet ((fun (x) (mod (+ (square x) 1) n)))
     (let ((i 1))
       (do* ((x1 (random n) (fun x1))
