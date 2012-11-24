@@ -359,10 +359,9 @@ produce the solution to the simultaneous one variable congruence system and its 
 (defun pairs (list1 list2)
   "zip list into dotted pairs.
 example: (pairs '(1 2 3 4) '(a b c d)) => ((1 . a) (2 . b) (3 . c) (4 . d))"
-Tested-by: Daniel Uber <djuber@gmail.com>
   (loop for i in list1 
-       for j in list2 
-       collect (cons i j)))
+     for j in list2 
+     collect (cons i j)))
 
 (defun unpair (list-of-pairs)
   "undo pairs operation. list1 is first value, list2 is second value."
@@ -618,6 +617,15 @@ to congruence mod p^expt"
       ;; for case 2b, nothing to do, since there are no solutions to add
       (unique answer))))
 				    
+(defun integer-digits (integer)
+  "stassats version"
+  (nreverse
+   (loop with remainder
+      do (setf (values integer remainder) (truncate integer 10))
+      collect remainder
+      until (zerop integer))))
+
+
 
 ; make a list of digits 
 (defun digits (n &key (list ()) (base 10))
@@ -899,7 +907,7 @@ to congruence mod p^expt"
 	   ;; if we found a divisor, give it and the remaining (unfactored) part
 	   ;; if we wasted too much time, give no divisor and n
 	   ((or (and (/= 1 d) (/= n d))
-		(> i n)) (if (> i n) (values nil n) (values d (/ n d))))
+		(> i n)) (if (> i n) (values 1 n) (values d (/ n d))))
 	;; if we want to see the steps, call with (pollard-rho n :debug t)
 	(when debug (format t "~a ~a ~a ~a ~a ~a~%"
 		i k x y d n)))))
@@ -954,8 +962,13 @@ to congruence mod p^expt"
     (flet ((fun (x) (+ (square x) c)))
       (do ((x1 x1 (mod (fun x1) n))
 	   (x2 x2 (mod (fun (fun x2)) n))
+           (count 0 (1+ count))
 	   (s n (gcd (- x2 x1) n)))
-	  ((< 1 s n) (values s (/ n s)))))))
+	  ((< 1 s n) (values s (/ n s)))
+        (when (> count (/ n 2))
+          (setf count 0)
+          (format t "exhausted ~a~%" c)
+          (incf c 2))))))
 
 (defun power-of-two-p (n)
   (zerop (logand n (1- n))))
@@ -978,3 +991,23 @@ to congruence mod p^expt"
 	  (rk (gcd (1- two-k-factorial) n)
 	      (gcd (1- two-k-factorial) n)))
 	 ((< 1 rk n) (values rk (/ n rk))))))
+
+
+
+
+(defun legendre (a p)
+  "return the legendre operator a over p"
+  (declare (type fixnum a p))
+  (the fixnum
+    (let ((gcd (gcd a p)))
+      (cond ((= gcd p) 0)
+	    (:otherwise 
+	     (let ((power (modpow a (/ (1- p) 2) p)))
+	       (if (= 1 power)
+		   1
+		   -1)))))))      
+
+
+(defun fermat (n)
+  "answer the nth fermat number"
+  (1+ (expt 2 (expt 2 n))))
