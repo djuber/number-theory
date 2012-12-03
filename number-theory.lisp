@@ -1,42 +1,4 @@
-;; catalogue should be a quick summary of all functions in the file.
-;; I think defpackage is probably a better long term solution
 
-(defparameter *number-theory-catalogue*
-  '(((sieve5 n) "Returns a list of all primes from 2 to n")
-    (*small-primes* "a list of primes less than 100M")
-    (*size-of-small-primes* "length of *small-primes*, for bounds checking")
-    ((primep n) "true if n is prime, calls factor")
-    ((prime-at n) "the nth prime")
-    ((prime-index p) "the index of the prime p, or nil")
-    ((next-prime p) "the prime after p")
-    ((prime-after n) "the smallest prime greater than or equal to n")
-    ((prime-before n) "The largest prime not greater than n")
-    ((previous-prime p) "The prime before p")
-    ((forward-prime-gap p) "the difference between (next-prime p) and p")
-    ((reverse-prime-gap p) "the differnece between p and (previous-prime p)")
-    ((goldbach n) "find linear combinations of primes adding to n")
-    ((bertrand n) "The smallest p between n and 2n")
-    ((triplets n :offset1 2 :offset2 6 :upper-bound 1000) "find the first n prime triplets p, p+offset1, p+offset2")
-    ((random-prime) "return a random element of *small-primes*")
-    ((random-composite factors) "product of factors random primes")
-    ((factor n) "a prime factorization of n")
-    ((is-square n) "is n a perfect square?")
-    ((square n) "multiply n by itself")
-    ((fermat-factor n) "yield a fermat factorization of n")
-    ((linear-diophantine-equation a b c) "find a solution of ax+by=c")
-    ((invertible-p number modulus) "Is number invertible mod modulus?")
-    ((modular-inverses number modulus) "the inverse of number mod modulus, or nil")
-    ((egcd a b) "extended euclidean algorithm, yields (list (gcd a b) x y), where ax + by = (a,b)")
-    ((modinv a m) "inverse of a mod m")
-    ((pairwise-relatively-prime list) "true if every number in the list has no common factors with any other")
-    ((chinese-remainder residues moduli :print nil) "solve a simultaneous single variable system of congruences")
-    ((transform-pair one two :print nil) "given two (residue modulus) pairs, produce an equivalent pair")
-    ((pairs list1 list2) "zip lists into dotted pairs.")
-    ((unpair list-of-pairs) "undo pairs operation. values list1 list2")
-    ((transform-system-if-possible residues moduli :print nil) 
-     "solve first two congruences, then pass system to chinese-remainder")
-    )
-  "all functions defined in this file")
 
 
 ;; Roger Corman's Sieve function from Corman Lisp examples
@@ -915,6 +877,7 @@ to congruence mod p^expt"
 
 ;; if n is prime, and phi(n) is n-1, this is imaginary and a problem, but
 ;; (multiple-value-bind (p q) (reverse-phi phi n) (* p q)) gives n (+ roundoff)
+;; if n is the product of more than two primes, this method is less useful, i.e. wrong
 (defun reverse-phi (phi n)
   "given phi(n), provide two factors of n"
   (values 
