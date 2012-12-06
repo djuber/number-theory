@@ -40,10 +40,10 @@ Output: composite if n is composite, otherwise probably prime
 write n − 1 as 2^s·d with d odd by factoring powers of 2 from n − 1
 LOOP: repeat k times:
    pick a random integer a in the range [2, n − 2]
-   x ← a^d mod n
+   x <- a^d mod n
    if x = 1 or x = n − 1 then do next LOOP
    for r = 1 .. s − 1
-      x ← x^2 mod n
+      x <- x^2 mod n
       if x = 1 then return composite
       if x = n − 1 then do next LOOP
    return composite
